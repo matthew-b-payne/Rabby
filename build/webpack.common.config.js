@@ -209,6 +209,7 @@ const config = {
   resolve: {
     alias: {
       moment: require.resolve('dayjs'),
+      ethers: require.resolve('ethers'), // always use same ethers for @rabby-wallet packages
     },
     plugins: [new TSConfigPathsPlugin()],
     fallback: {
@@ -221,6 +222,55 @@ const config = {
   optimization: {
     splitChunks: {
       cacheGroups: {
+        vendors_ui: {
+          minSize: 0,
+          name: "vendors_ui",
+          test: module => {
+            return (
+              module.resource &&
+              /[\\/]node_modules[\\/]/.test(module.resource) &&
+              [
+                '/react/',
+                '/react-dom/',
+                '/react-redux/',
+                '/react-router-dom/',
+                '/react-use/',
+                '/react-window/',
+                '@ngraveio/bc-ur'
+              ].some(item => module.resource.includes(item))
+            );
+          },
+          chunks: "all",
+        },
+        vendors_heavy: {
+          minSize: 1024 * 50,
+          name: "vendors_heavy",
+          test: module => {
+            // `module.resource` contains the absolute path of the file on disk.
+            // Note the usage of `path.sep` instead of / or \, for cross-platform compatibility.
+            // const path = require('path');
+            return (
+              module.resource &&
+              /[\\/]node_modules[\\/]/.test(module.resource) &&
+              [
+                'web3-utils',
+                'eth-sig-util',
+                'ethereumjs-wallet',
+                'ethereumjs-util',
+                '@ethereumjs/tx',
+                'ethereumjs-tx',
+                '@ethereumjs/common',
+                'bip39',
+                'ethers',
+                'web3-eth-abi',
+                'lodash',
+                '@sentry/browser',
+                '@rabby-wallet/eth-walletconnect-keyring',
+              ].some(item => module.resource.includes(item))
+            );
+          },
+          chunks: "all",
+        },
         'webextension-polyfill': {
           minSize: 0,
           test: /[\\/]node_modules[\\/]webextension-polyfill/,
